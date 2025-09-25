@@ -34,7 +34,7 @@ const ProjectController: ProjectController = {
 
   store: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { project_id, message, response } = req.body;
+      const { project_id, message, response, plain_text } = req.body;
 
       let project;
       // If project_id is provided, find the project
@@ -62,6 +62,7 @@ const ProjectController: ProjectController = {
         project_id: project._id,
         message: message, // message content
         response: response,
+        plain_text:plain_text,
       });
 
       res.status(201).json({
@@ -92,7 +93,7 @@ const ProjectController: ProjectController = {
 
 
       // Fetch latest 10 messages for this project (latest first)
-      const messages = await Message.find({ project_id: project._id }).sort({ _id: -1 }).limit(10);
+      const messages = await Message.find({ project_id: project._id }).limit(10);
 
       res.status(200).json({
         success: true,

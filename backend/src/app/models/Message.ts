@@ -23,6 +23,10 @@ const Message: Schema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    plain_text:{
+        type: String,
+        required: false,
+    },
     created_at: {
         type: Date,
         required: false,
