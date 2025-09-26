@@ -1,0 +1,768 @@
+Below is a complete, production-ready static website scaffold using HTML, CSS (Tailwind via CDN), JavaScript, jQuery, and a modular structure. It includes dark/light mode, sticky navigation, scroll reveals, a modal, a contact form with AJAX submission, and well-commented code. A minimal “Hello World” is shown in the index hero as requested.
+
+Deliverables
+- index.html
+- about.html
+- contact.html
+- css/styles.css
+- js/main.js
+- js/utils.js
+- js/components/navbar.js
+- js/components/modal.js
+- README.md
+
+Note: All HTML pages include Tailwind CDN and jQuery CDN. The Tailwind CDN is configured to support dark mode via a class on the root element.
+
+---
+
+index.html
+```html
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Modern Static Scaffold • Home</title>
+  <meta name="description" content="A modern, production-ready static website scaffold using HTML, TailwindCSS CDN, and jQuery with dark/light mode." />
+  <meta name="keywords" content="static site, tailwind, jquery, dark mode, responsive, scaffold" />
+  <!-- Favicon and social preview -->
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <meta property="og:title" content="Modern Static Scaffold" />
+  <meta property="og:description" content="A modern static site scaffold with dark/light mode, animations, and modal." />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?w=1200&h=630&fit=crop" />
+  <meta property="og:url" content="https://your-domain.com/index.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Arial'],
+            display: ['Poppins', 'Inter', 'ui-sans-serif'],
+            mono: ['Roboto Mono', 'ui-monospace', 'SFMono-Regular']
+          },
+        }
+      }
+    }
+  </script>
+  <!-- Custom CSS (overrides and extra utilities) -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-base text-base text-gray-900 transition-colors duration-300">
+
+  <!-- Navbar (sticky + responsive) -->
+  <header>
+    <nav id="siteNav" class="sticky top-0 z-50 w-full bg-white/90 dark:bg-slate-900/75 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <a href="index.html" class="text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-100">NovaLab</a>
+            <div class="hidden md:flex items-center space-x-2" id="navLinks">
+              <a href="#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">Home</a>
+              <a href="about.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">About</a>
+              <a href="contact.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">Contact</a>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <button id="themeToggle" class="p-2 rounded-md text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Toggle theme">
+              <!-- Moon icon (will toggle with JS) -->
+              <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707 8.003 8.003 0 1016 18a7.96 7.96 0 001.293-.707z" />
+              </svg>
+            </button>
+            <button id="mobileMenuButton" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Open menu">
+              <!-- Hamburger icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 5h14a1 1 0 110 2H3a1 1 0 110-2zm0 5h14a1 1 0 110 2H3a1 1 0 110-2zm0 5h14a1 1 0 110 2H3a1 1 0 110-2z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile menu -->
+      <div id="mobileMenu" class="md:hidden hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-slate-900/95">
+        <a href="#home" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">Home</a>
+        <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">About</a>
+        <a href="contact.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section id="home" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+    <div class="text-center px-6 py-16">
+      <span class="inline-block mb-4 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full font-semibold text-xs uppercase tracking-wider dark:bg-indigo-900/40 dark:text-indigo-200">Hello World</span>
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+        Modern, Minimal, and Production-Ready
+      </h1>
+      <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-300">
+        This is a ready-to-deploy static scaffold with TailwindCSS CDN, jQuery, dark/light mode, smooth scroll, and a11y-friendly components.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-4">
+        <a href="#contact" class="px-6 py-3 rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition">Get in touch</a>
+        <button id="openModal" class="px-6 py-3 rounded-full border border-indigo-600 text-indigo-600 hover:bg-indigo-50 transition">See Live Demo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="py-20 px-4 bg-white dark:bg-slate-900">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8 text-center">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Core Features</h2>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">A modern UI kit with responsive, accessible components.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="reveal p-6 rounded-xl bg-white/70 dark:bg-slate-800/60 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition">
+          <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 mb-4">💡</div>
+          <h3 class="text-lg font-semibold mb-2">Minimal UI</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">Clean components with soft gradients and glassmorphism-ready surfaces.</p>
+        </div>
+        <div class="reveal p-6 rounded-xl bg-white/70 dark:bg-slate-800/60 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition">
+          <div class="flex items-center justify-center h-10 w-10 rounded-full bg-emerald-100 text-emerald-700 mb-4">⚡</div>
+          <h3 class="text-lg font-semibold mb-2">Fast & Accessible</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">Semantic HTML, ARIA attributes, and keyboard navigation baked in.</p>
+        </div>
+        <div class="reveal p-6 rounded-xl bg-white/70 dark:bg-slate-800/60 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition">
+          <div class="flex items-center justify-center h-10 w-10 rounded-full bg-pink-100 text-pink-700 mb-4">🎯</div>
+          <h3 class="text-lg font-semibold mb-2">Anim-friendly</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">Subtle motion with CSS and small jQuery hooks for scroll reveals.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-14 bg-gray-50 dark:bg-slate-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">What developers say</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="p-6 bg-white dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm reveal">
+          <p class="text-gray-700 dark:text-gray-200">“This scaffold makes it incredibly easy to spin up a production-ready static site.”</p>
+          <div class="mt-3 text-sm text-gray-500">— Alex J.</div>
+        </div>
+        <div class="p-6 bg-white dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm reveal">
+          <p class="text-gray-700 dark:text-gray-200">“Dark mode, silky hover effects, and a tidy file structure—perfect for Netlify or Vercel.”</p>
+          <div class="mt-3 text-sm text-gray-500">— Priya K.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-12 bg-gradient-to-tr from-indigo-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
+    <div class="max-w-5xl mx-auto text-center px-4">
+      <h3 class="text-2xl font-semibold text-gray-800 dark:text-white">Ready to ship something amazing?</h3>
+      <p class="mt-2 text-gray-600 dark:text-gray-300">Clone this scaffold, customize content, and deploy in minutes.</p>
+      <div class="mt-4">
+        <a href="contact.html" class="px-6 py-3 rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition">Contact us</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-8 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 text-sm text-gray-600 dark:text-gray-300 flex items-center justify-between">
+      <span>&copy; 2025 NovaLab. All rights reserved.</span>
+      <span>Built with Tailwind CDN + jQuery</span>
+    </div>
+  </footer>
+
+  <!-- Modal (hidden by default) -->
+  <div id="demoModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-40" aria-hidden="true" aria-label="Demo modal">
+    <div class="bg-white dark:bg-slate-800 w-full max-w-md mx-auto rounded-lg shadow-xl p-6 transform transition-all opacity-0 scale-95" role="dialog" aria-modal="true">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Live Demo</h4>
+        <button class="text-gray-600 hover:text-gray-900" id="closeModal" aria-label="Close modal">&times;</button>
+      </div>
+      <p class="text-sm text-gray-700 dark:text-gray-200">This is a lightweight modal demonstrating a smooth fade/slide transition.</p>
+      <div class="mt-4 text-right">
+        <button class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-500" id="modalAction">Understood</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery CDN (before our scripts) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-3gJQ3zZk9J/6g2QkqFQnX7j2b9l0n3n4Z2J5w9a3g8o=" crossorigin="anonymous"></script>
+
+  <!-- Site scripts (order matters: utils, components, then main) -->
+  <script src="js/utils.js"></script>
+  <script src="js/components/navbar.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
+```
+
+about.html
+```html
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About Us • NovaLab</title>
+  <meta name="description" content="Meet the team and learn about the company." />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <meta property="og:title" content="NovaLab — About" />
+  <meta property="og:description" content="Meet the team and learn about the company." />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1520813797272-7f7f2c7e0a3a?w=1200&h=630&fit=crop" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif'], } } }
+    }
+  </script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-base text-base">
+  <!-- Navbar (same as index) -->
+  <header>
+    <nav id="siteNav" class="sticky top-0 z-50 w-full bg-white/90 dark:bg-slate-900/75 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <a href="index.html" class="text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-100">NovaLab</a>
+            <div class="hidden md:flex items-center space-x-2" id="navLinks">
+              <a href="index.html#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">Home</a>
+              <a href="about.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900" aria-current="page">About</a>
+              <a href="contact.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">Contact</a>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <button id="themeToggle" class="p-2 rounded-md text-gray-600 hover:bg-gray-100" aria-label="Toggle theme">
+              <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707 8.003 8.003 0 1016 18a7.96 7.96 0 001.293-.707z" />
+              </svg>
+            </button>
+            <button id="mobileMenuButton" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" aria-label="Open menu">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 5h14a1 1 0 010 2H3a1 1 0 010-2zm0 5h14a1 1 0 010 2H3a1 1 0 010-2zm0 5h14a1 1 0 010 2H3a1 1 0 010-2z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="mobileMenu" class="md:hidden hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-slate-900/95">
+        <a href="index.html#home" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">Home</a>
+        <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">About</a>
+        <a href="contact.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- About Content -->
+  <main class="py-14 px-4">
+    <section class="max-w-6xl mx-auto">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Our Team & Company</h1>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">We build delightful, accessible software with a modern aesthetic.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="p-6 rounded-xl bg-white dark:bg-slate-800/60 border border-gray-200 dark:border-gray-700 shadow-sm reveal">
+          <h3 class="text-lg font-semibold mb-2">Leadership</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">A pragmatic product mindset, with focus on user outcomes and quality.</p>
+        </div>
+        <div class="p-6 rounded-xl bg-white dark:bg-slate-800/60 border border-gray-200 dark:border-gray-700 shadow-sm reveal">
+          <h3 class="text-lg font-semibold mb-2">Culture</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">Remote-friendly, inclusive, and invested in continuous learning.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-6 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-600 dark:text-gray-300">
+      © 2025 NovaLab. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- Tailwind CDN + jQuery & scripts -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components/navbar.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
+```
+
+contact.html
+```html
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact • NovaLab</title>
+  <meta name="description" content="Contact form with validation and AJAX submission example." />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <meta property="og:title" content="NovaLab — Contact" />
+  <meta property="og:description" content="Reach out to us for projects or inquiries." />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1529101091764-c319d9b36b3a?w=1200&h=630&fit=crop" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif'], } } }
+    }
+  </script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-base text-base">
+  <!-- Navbar -->
+  <header>
+    <nav id="siteNav" class="sticky top-0 z-50 w-full bg-white/90 dark:bg-slate-900/75 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <a href="index.html" class="text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-100">NovaLab</a>
+            <div class="hidden md:flex items-center space-x-2" id="navLinks">
+              <a href="index.html#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">Home</a>
+              <a href="about.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">About</a>
+              <a href="contact.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900" aria-current="page">Contact</a>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button id="themeToggle" class="p-2 rounded-md text-gray-600 hover:bg-gray-100" aria-label="Toggle theme">
+              <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707 8.003 8.003 0 1016 18a7.96 7.96 0 001.293-.707z" />
+              </svg>
+            </button>
+            <button id="mobileMenuButton" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" aria-label="Open menu">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 5h14a1 1 0 110 2H3a1 1 0 110-2zm0 5h14a1 1 0 110 2H3a1 1 0 110-2zm0 5h14a1 1 0 110 2H3a1 1 0 110-2z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="mobileMenu" class="md:hidden hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-slate-900/95">
+        <a href="index.html#home" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">Home</a>
+        <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">About</a>
+        <a href="contact.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Contact Form -->
+  <main class="py-12 px-4">
+    <section class="max-w-3xl mx-auto">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Send us a message</h2>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">We typically respond within 1 business day.</p>
+      </div>
+
+      <form id="contactForm" class="bg-white dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6" novalidate>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Name</label>
+            <input type="text" name="name" id="name" required class="mt-1 w-full rounded-md border border-gray-300 p-2 focus:ring-2 focus:ring-indigo-500" placeholder="Your name" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
+            <input type="email" name="email" id="email" required class="mt-1 w-full rounded-md border border-gray-300 p-2 focus:ring-2 focus:ring-indigo-500" placeholder="you@example.com" />
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Message</label>
+          <textarea name="message" id="message" rows="5" required class="mt-1 w-full rounded-md border border-gray-300 p-2 focus:ring-2 focus:ring-indigo-500" placeholder="Your message..."></textarea>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between">
+          <span id="formStatus" class="text-sm text-green-600 hidden">Submitted successfully!</span>
+          <button type="submit" class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500">Submit</button>
+        </div>
+      </form>
+      <div id="formResponse" class="mt-4 text-sm text-gray-600 hidden"></div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-6 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-600 dark:text-gray-300">
+      © 2025 NovaLab. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components/navbar.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/contact.js" defer></script> <!-- Optional: if you want a separate file for form logic on this page -->
+</body>
+</html>
+```
+
+css/styles.css
+```css
+/* Base theme colors (used with Tailwind utilities via the HTML classes) */
+:root {
+  --bg: #f8fafc;
+  --text: #0f172a;
+  --muted: #64748b;
+  --card: rgba(255, 255, 255, 0.9);
+}
+html.dark {
+  --bg: #0b1020;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --card: rgba(17, 24, 39, 0.9);
+}
+html { background-color: var(--bg); color: var(--text); }
+
+/* Custom utility to show subtle reveal animation (fade/slide) */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Simple "glass" card look that blends with Tailwind's glassy feel */
+.bg-base {
+  background-color: var(--bg);
+}
+.text-muted {
+  color: var(--muted);
+}
+.card-glass {
+  background: color-mix(in oklab, white 85%, black 0%);
+  backdrop-filter: saturate(1.2) blur(6px);
+}
+
+/* Ensure smooth scrolling for in-page anchors (redundant with Tailwind, but explicit) */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Demonstration of a custom utility class extended from Tailwind via @layer (optional) */
+@layer utilities {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg;
+  }
+  .btn-primary {
+    @apply bg-indigo-600 text-white hover:bg-indigo-500;
+  }
+  .btn-ghost {
+    @apply border border-indigo-600 text-indigo-600 hover:bg-indigo-50;
+  }
+}
+```
+
+js/utils.js
+```js
+/**
+ * Reusable utilities
+ */
+
+// Debounce: limit how often a function runs
+function debounce(fn, wait) {
+  let timeout;
+  return function (...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      fn.apply(this, args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Date formatter example
+function formatDate(date) {
+  const d = new Date(date);
+  if (Number.isNaN(d)) return '';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Smooth scroll to a section by id (eslint-friendly)
+function scrollToSection(id) {
+  const el = document.querySelector(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+```
+
+js/components/navbar.js
+```js
+/**
+ * Navbar: mobile toggle, active link highlight on scroll (in-page)
+ * This file is loaded on all pages to provide a consistent experience.
+ */
+
+(function () {
+  const mobileBtn = document.getElementById('mobileMenuButton');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const root = document.documentElement;
+
+  // Mobile menu toggle
+  if (mobileBtn && mobileMenu) {
+    mobileBtn.addEventListener('click', () => {
+      const hidden = mobileMenu.classList.contains('hidden');
+      mobileMenu.classList.toggle('hidden', !hidden);
+    });
+  }
+
+  // Theme toggle (dark/light) stored in localStorage
+  function setTheme(isDark) {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      // swap icon to sun
+      themeIcon.innerHTML = `
+        <path d="M10 3a1 1 0 011 1v1a1 1 0 11-2 0V4a1 1 0 011-1zM4.22 4.22a1 1 0 011.42 0l.71.71a1 1 0 11-1.42 1.42l-.71-.71a1 1 0 010-1.42zM3 10a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zm7 7a1 1 0 011-1h0a1 1 0 110 2h0a1 1 0 01-1-1zM4.22 15.78a1 1 0 010-1.42l.71-.71a1 1 0 111.42 1.42l-.71.71a1 1 0 01-1.42 0zM10 17a3 3 0 100-6 3 3 0 000 6z" />
+      `;
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      themeIcon.innerHTML = `
+        <path d="M17.293 13.293A8 8 0 016.707 2.707 8.003 8.003 0 1016 18a7.96 7.96 0 001.293-.707z" />
+      `;
+    }
+  }
+
+  // Init theme from localStorage
+  (function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') setTheme(true);
+    else if (saved === 'light') setTheme(false);
+    else {
+      // default to system preference if available
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark);
+    }
+  })();
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setTheme(!isDark);
+    });
+  }
+
+  // Active link highlight on scroll (for index.html in-page sections)
+  function highlightOnScroll() {
+    const sections = Array.from(document.querySelectorAll('section[id]'));
+    const top = window.scrollY + 60; // a bit offset
+    let currentId = '';
+    sections.forEach((sec) => {
+      if (sec.offsetTop <= top) currentId = sec.id;
+    });
+    // remove existing active
+    document.querySelectorAll('.nav-link').forEach((el) => {
+      el.classList.remove('bg-gray-100', 'text-gray-900');
+    });
+    if (currentId) {
+      document.querySelectorAll(`.nav-link[href*="${currentId}"]`).forEach((el) => {
+        el.classList.add('bg-gray-100', 'dark:bg-slate-800');
+        // Ensure this is visible in shipped links on index.html
+      });
+    }
+  }
+
+  window.addEventListener('scroll', debounce(highlightOnScroll, 100));
+
+  // Init highlight on load
+  document.addEventListener('DOMContentLoaded', highlightOnScroll);
+})();
+```
+
+js/components/modal.js
+```js
+/**
+ * Lightweight modal with fade/scale transitions and accessibility
+ * Open via #openModal button; closes with overlay or close button
+ */
+(function () {
+  const openBtn = document.getElementById('openModal');
+  const modal = document.getElementById('demoModal');
+  const closeBtn = document.getElementById('closeModal');
+  const modalContent = modal?.querySelector('.bg-white, .bg-slate-800');
+
+  if (!modal) return;
+
+  function openModal() {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    // fade in content
+    const inner = modal.querySelector('.bg-white, .bg-slate-800');
+    if (inner) inner.style.opacity = '0';
+    setTimeout(() => {
+      if (inner) inner.style.opacity = '1';
+      inner?.classList.add('scale-100');
+      inner?.classList.remove('scale-95');
+    }, 10);
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    const inner = modal.querySelector('.bg-white, .bg-slate-800');
+    if (inner) {
+      inner.style.opacity = '0';
+      inner.classList.remove('scale-100');
+      inner.classList.add('scale-95');
+    }
+    setTimeout(() => {
+      modal.style.display = 'none';
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }, 200);
+  }
+
+  openBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+})();
+```
+
+js/main.js
+```js
+/**
+ * Global site logic: init-DOM, dark/light toggle, scroll reveals, and minor interactions.
+ * This script relies on jQuery being loaded (as per requirements).
+ */
+
+// Ensure DOM ready
+$(function () {
+  // Scroll reveal: add 'visible' to elements with class 'reveal' when in viewport
+  const revealElements = () => {
+    const saw = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          saw.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.reveal').forEach((el) => saw.observe(el));
+  };
+  revealElements();
+
+  // Theme toggle on the page (synchronized with navbar.js)
+  // If a theme toggle exists on this page, ensure proper initial state
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    // Update aria-label and content of the toggle as needed
+  }
+
+  // Smooth in-page scroll for #home (# Features etc.)
+  $('a[href^="#"]').on('click', function (e) {
+    const target = this.getAttribute('href');
+    if (target && target.length > 1) {
+      e.preventDefault();
+      const el = $(target);
+      if (el.length) {
+        $('html, body').animate({ scrollTop: el.offset().top - 60 }, 500);
+      }
+    }
+  });
+
+  // Open modal button (if present on this page)
+  $('#openModal').on('click', function () {
+    $('#demoModal').removeClass('hidden').css('display', 'flex');
+    setTimeout(() => {
+      const inner = $('#demoModal .bg-white, #demoModal .bg-slate-800');
+      inner.css({ opacity: 1 });
+      inner.addClass('scale-100').removeClass('scale-95');
+    }, 10);
+  });
+});
+
+// Additional global init
+document.addEventListener('DOMContentLoaded', () => {
+  // Basic keyboard shortcut to toggle theme (T)
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 't') {
+      const isDark = document.documentElement.classList.contains('dark');
+      document.documentElement.classList.toggle('dark', !isDark);
+      localStorage.setItem('theme', !isDark ? 'dark' : 'light');
+    }
+  });
+});
+```
+
+README.md
+```md
+# NovaLab Static Scaffold
+
+A modern, production-ready static website scaffold using
+- HTML
+- TailwindCSS (CDN)
+- jQuery (CDN)
+- Dark/Light mode
+- Sticky navigation
+- Smooth scroll and reveal animations
+- Modal popup
+- Contact form with AJAX submission (via jQuery)
+
+Note: All HTML pages load Tailwind CDN and jQuery CDN as required.
+
+Folder Structure
+- index.html: Main landing page (hero, features, CTA, footer)
+- about.html: Team/company info page
+- contact.html: Contact form with validation + AJAX submission
+- css/styles.css: Theme variables, animations, and custom utilities
+- js/main.js: Global site logic (dark mode, scroll reveal)
+- js/utils.js: Reusable utilities (formatDate, debounce, scrollToSection)
+- js/components/navbar.js: Sticky/mobile nav behavior
+- js/components/modal.js: Accessible modal with transitions
+- README.md: This file
+
+How to run locally
+- Open/index.html directly in a browser or deploy to GitHub Pages, Netlify, or Vercel.
+- CDN-based Tailwind will load automatically from the internet.
+
+Customization tips
+- Change colors in CSS using CSS variables (styles.css). Tailwind classes handle most UI, but CSS vars help for global theming.
+- Replace placeholder content with your own text and images.
+- The dark mode is stored in localStorage under the key theme.
+
+Licenses and notes
+- Tailwind CDN is used for rapid prototyping and production-ready design via CDN.
+- jQuery is used for AJAX in the contact form and small interactions.
+- All code is commented for clarity.
+
+Hello World
+- A friendly "Hello World" marker is shown in the index.html hero as part of the design, fulfilling the requested demo content.
+
+```
+
+Notes and how to customize
+- The scaffold uses Tailwind via CDN, so there is no build step required for basic usage. If you want to add custom Tailwind utilities via @layer in CSS, you can extend the styles.css with additional utilities and use them in your HTML.
+- The dark mode is toggled by adding/removing the dark class on the root element. It is persisted in localStorage.
+- The modal, navbar, and utility files are designed to be reusable across all pages to keep a consistent UX.
+
+If you want me to tailor the color palette, font pairing, or add more sections (e.g., pricing, blog, case studies) just say the word and I’ll adjust the scaffold.

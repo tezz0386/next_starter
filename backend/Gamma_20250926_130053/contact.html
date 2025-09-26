@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact • NovaLab</title>
+  <meta name="description" content="Contact form with validation and AJAX submission example." />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <meta property="og:title" content="NovaLab — Contact" />
+  <meta property="og:description" content="Reach out to us for projects or inquiries." />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1529101091764-c319d9b36b3a?w=1200&h=630&fit=crop" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif'], } } }
+    }
+  </script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-base text-base">
+  <!-- Navbar -->
+  <header>
+    <nav id="siteNav" class="sticky top-0 z-50 w-full bg-white/90 dark:bg-slate-900/75 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <a href="index.html" class="text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-100">NovaLab</a>
+            <div class="hidden md:flex items-center space-x-2" id="navLinks">
+              <a href="index.html#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">Home</a>
+              <a href="about.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900">About</a>
+              <a href="contact.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 hover:text-gray-900" aria-current="page">Contact</a>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button id="themeToggle" class="p-2 rounded-md text-gray-600 hover:bg-gray-100" aria-label="Toggle theme">
+              <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707 8.003 8.003 0 1016 18a7.96 7.96 0 001.293-.707z" />
+              </svg>
+            </button>
+            <button id="mobileMenuButton" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" aria-label="Open menu">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 5h14a1 1 0 110 2H3a1 1 0 110-2zm0 5h14a1 1 0 110 2H3a1 1 0 110-2zm0 5h14a1 1 0 110 2H3a1 1 0 110-2z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="mobileMenu" class="md:hidden hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-slate-900/95">
+        <a href="index.html#home" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">Home</a>
+        <a href="about.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">About</a>
+        <a href="contact.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/60">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Contact Form -->
+  <main class="py-12 px-4">
+    <section class="max-w-3xl mx-auto">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Send us a message</h2>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">We typically respond within 1 business day.</p>
+      </div>
+
+      <form id="contactForm" class="bg-white dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6" novalidate>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Name</label>
+            <input type="text" name="name" id="name" required class="mt-1 w-full rounded-md border border-gray-300 p-2 focus:ring-2 focus:ring-indigo-500" placeholder="Your name" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
+            <input type="email" name="email" id="email" required class="mt-1 w-full rounded-md border border-gray-300 p-2 focus:ring-2 focus:ring-indigo-500" placeholder="you@example.com" />
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Message</label>
+          <textarea name="message" id="message" rows="5" required class="mt-1 w-full rounded-md border border-gray-300 p-2 focus:ring-2 focus:ring-indigo-500" placeholder="Your message..."></textarea>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between">
+          <span id="formStatus" class="text-sm text-green-600 hidden">Submitted successfully!</span>
+          <button type="submit" class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500">Submit</button>
+        </div>
+      </form>
+      <div id="formResponse" class="mt-4 text-sm text-gray-600 hidden"></div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-6 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-600 dark:text-gray-300">
+      © 2025 NovaLab. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components/navbar.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/contact.js" defer></script> <!-- Optional: if you want a separate file for form logic on this page -->
+</body>
+</html>

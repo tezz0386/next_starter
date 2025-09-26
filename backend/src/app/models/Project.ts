@@ -23,6 +23,11 @@ const Project: Schema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    project_type: {
+        type: String,
+        required: false,
+        default: 'static_site',
+    },
     created_at: {
         type: Date,
         required: false,

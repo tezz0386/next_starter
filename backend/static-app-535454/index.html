@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en" class="bg-white text-gray-900" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NovaShop - Modern Ecommerce Demo</title>
+  <meta name="description" content="A modern, minimal, responsive ecommerce static site scaffold with dark/light mode, smooth scroll, and Tailwind CSS via CDN." />
+  <meta property="og:title" content="NovaShop - Modern Ecommerce Demo" />
+  <meta property="og:description" content="A scalable static site scaffold with Tailwind CDN, jQuery, and accessible UI components." />
+  <meta property="og:image" content="https://example.com/og-image.png" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    // Tailwind config (via CDN)
+    tailwind.config = {
+      darkMode: 'class', // enable class-based dark mode
+      theme: {
+        extend: {
+          colors: {
+            brand: '#7c3aed',
+            surface: '#f8fafc',
+            'bg-soft': '#f7f7fb',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom CSS (overrides, variables, animations, utilities) -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="antialiased min-h-screen bg-white text-slate-900 transition-colors duration-300">
+  <!-- Navbar -->
+  <header class="sticky top-0 z-50" aria-label="Top">
+    <nav id="mainNav" class="bg-white/90 dark:bg-gray-900/90 backdrop-filter backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm">
+      <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-2">
+          <span class="text-xl font-semibold tracking-wide">NovaShop</span>
+          <span class="hidden sm:inline-block text-sm text-gray-500">— Minimal Ecommerce</span>
+        </a>
+
+        <!-- Desktop Menu -->
+        <ul class="hidden md:flex items-center space-x-6">
+          <li><a href="#home" class="nav-link px-2 py-1 text-sm hover:text-brand active" aria-label="Home">Home</a></li>
+          <li><a href="#features" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="Features">Features</a></li>
+          <li><a href="#shop" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="Shop">Shop</a></li>
+          <li><a href="about.html" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="About">About</a></li>
+          <li><a href="contact.html" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="Contact">Contact</a></li>
+        </ul>
+
+        <!-- Theme + Mobile Button -->
+        <div class="flex items-center gap-3">
+          <button id="themeToggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none" aria-label="Toggle theme">
+            <!-- Icon will be swapped by CSS/JS -->
+            <span class="material-icons" aria-hidden="true">brightness_6</span>
+          </button>
+
+          <button id="menuToggle" class="md:hidden p-2 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Open menu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu (hidden by default) -->
+      <div id="mobileMenu" class="md:hidden hidden px-4 pb-4">
+        <ul class="space-y-2">
+          <li><a href="#home" class="nav-link block px-2 py-2 rounded" aria-label="Home">Home</a></li>
+          <li><a href="#features" class="nav-link block px-2 py-2 rounded" aria-label="Features">Features</a></li>
+          <li><a href="#shop" class="nav-link block px-2 py-2 rounded" aria-label="Shop">Shop</a></li>
+          <li><a href="about.html" class="nav-link block px-2 py-2 rounded" aria-label="About">About</a></li>
+          <li><a href="contact.html" class="nav-link block px-2 py-2 rounded" aria-label="Contact">Contact</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <main id="home" class="pt-14 pb-20">
+    <section class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      <div class="space-y-5">
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+          Elevate your shopping experience with a fast, modern storefront
+        </h1>
+        <p class="text-gray-600 dark:text-gray-300 max-w-md">
+          Clean, responsive, and accessible. Built with Tailwind CDN and modern UI patterns. Toggle dark/light, smooth scroll, micro-interactions and a delightful product gallery.
+        </p>
+        <div class="flex items-center gap-4">
+          <a href="#shop" class="btn btn-primary px-5 py-3 rounded-full bg-brand text-white hover:bg-indigo-600 transition">Shop Now</a>
+          <button class="btn btn-ghost px-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800" id="openModalDemo" aria-label="Product quick view demo">Preview Product</button>
+        </div>
+      </div>
+
+      <div class="relative h-72 rounded-xl overflow-hidden shadow-xl bg-gradient-to-br from-indigo-500 to-pink-500">
+        <!-- Simple hero illustration -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="text-center text-white drop-shadow-lg">
+            <div class="text-4xl font-bold">NovaShop</div>
+            <div class="text-sm mt-2 uppercase tracking-widest">Minimal. Modern. Fast.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Features -->
+  <section id="features" class="bg-gray-50 dark:bg-gray-900 pt-12 pb-20">
+    <div class="container mx-auto px-4">
+      <h2 class="text-2xl font-semibold mb-6 text-gray-900 dark:text-gray-100">What you get</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="p-5 rounded-xl bg-white dark:bg-gray-800 shadow card-glass reveal">
+          <div class="mb-2 text-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l3 6 6 1-4.5 4.5L17 21l-5-3-5 3 1.5-6.5L3 9l6-1 3-5z"/>
+            </svg>
+          </div>
+          <h3 class="font-semibold">Fast Lighthouse-Score</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">Optimized static assets, minimal JS, and a silky experience.</p>
+        </div>
+        <div class="p-5 rounded-xl bg-white dark:bg-gray-800 shadow card-glass reveal">
+          <div class="mb-2 text-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l4 4-4 4-4-4 4-4z"/><path d="M4 13l8 8"/>
+            </svg>
+          </div>
+          <h3 class="font-semibold">Dark/Light Modes</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">One toggle to switch themes; persists via localStorage.</p>
+        </div>
+        <div class="p-5 rounded-xl bg-white dark:bg-gray-800 shadow card-glass reveal">
+          <div class="mb-2 text-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3v18"/><path d="M3 12h18"/>
+            </svg>
+          </div>
+          <h3 class="font-semibold">Accessible, Semantics-first</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">Semantic HTML with responsive layout and keyboard support.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shop Preview (Product Grid) -->
+  <section id="shop" class="py-14">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Trending Products</h2>
+        <button id="openCart" class="btn px-4 py-2 rounded-full bg-gray-800 text-white hidden md:inline-flex" aria-label="Open cart">Open Cart</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Product Card 1 -->
+        <article class="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg transition group reveal" tabindex="0">
+          <div class="h-40 rounded-xl bg-gradient-to-br from-blue-500 to-teal-500 mb-4"></div>
+          <h3 class="font-semibold mb-1">Aurora Headphones</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">$129.99</p>
+          <div class="flex items-center justify-between">
+            <button class="btn px-3 py-2 rounded bg-brand text-white hover:bg-indigo-600" aria-label="Add to cart">Add</button>
+            <button class="btn btn-ghost px-3 py-2 rounded border" aria-label="View product" data-product="Aurora Headphones">View</button>
+          </div>
+        </article>
+
+        <!-- Product Card 2 -->
+        <article class="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg transition group reveal" tabindex="0">
+          <div class="h-40 rounded-xl bg-gradient-to-br from-pink-500 to-orange-500 mb-4"></div>
+          <h3 class="font-semibold mb-1">Pulse Smartwatch</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">$199.00</p>
+          <div class="flex items-center justify-between">
+            <button class="btn px-3 py-2 rounded bg-brand text-white hover:bg-indigo-600" aria-label="Add to cart">Add</button>
+            <button class="btn btn-ghost px-3 py-2 rounded border" aria-label="View product" data-product="Pulse Smartwatch">View</button>
+          </div>
+        </article>
+
+        <!-- Product Card 3 -->
+        <article class="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg transition group reveal" tabindex="0">
+          <div class="h-40 rounded-xl bg-gradient-to-br from-green-400 to-blue-500 mb-4"></div>
+          <h3 class="font-semibold mb-1">Nimbus Speaker</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">$89.00</p>
+          <div class="flex items-center justify-between">
+            <button class="btn px-3 py-2 rounded bg-brand text-white hover:bg-indigo-600" aria-label="Add to cart">Add</button>
+            <button class="btn btn-ghost px-3 py-2 rounded border" aria-label="View product" data-product="Nimbus Speaker">View</button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter CTA -->
+  <section class="bg-gradient-to-r from-indigo-50 to-white dark:from-gray-900 dark:to-gray-800 py-14">
+    <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+      <div class="space-y-3">
+        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Join our newsletter for exclusive deals</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300">Get early access to new products and discounts. Unsubscribe anytime.</p>
+      </div>
+      <form class="flex items-center gap-2" onsubmit="return false;">
+        <input type="email" placeholder="Enter your email" class="flex-1 p-3 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-brand" required />
+        <button class="px-5 py-3 rounded bg-brand text-white hover:bg-indigo-600" type="submit" aria-label="Subscribe">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+    <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-gray-600 dark:text-gray-300">© 2025 NovaShop. All rights reserved.</p>
+      <div class="flex items-center gap-3">
+        <a href="#" aria-label="Twitter" class="text-gray-500 hover:text-brand">Twitter</a>
+        <a href="#" aria-label="Instagram" class="text-gray-500 hover:text-brand">Instagram</a>
+        <a href="#" aria-label="GitHub" class="text-gray-500 hover:text-brand">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modals -->
+  <div id="modalBackdrop" class="fixed inset-0 bg-black/50 hidden z-40"></div>
+  <div id="productModal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden" role="dialog" aria-label="Product quick view">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-4" style="animation: fadeIn .25s;">
+      <div class="flex items-start justify-between mb-3">
+        <h4 class="font-semibold">Product Preview</h4>
+        <button id="modalClose" aria-label="Close" class="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">✕</button>
+      </div>
+      <div class="h-40 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500 mb-3"></div>
+      <p class="text-sm text-gray-700 dark:text-gray-300" id="modalProductName">Product details will appear here.</p>
+      <div class="mt-3 flex items-center justify-between">
+        <span class="font-semibold">$99.99</span>
+        <button class="btn px-4 py-2 rounded bg-brand text-white" aria-label="Add to cart in modal">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Open modal demo button (hidden on load) -->
+  <button id="modalDemoBtn" class="hidden" aria-label="Open modal demo"></button>
+
+  <!-- jQuery (CDN) -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="" crossorigin="anonymous"></script>
+  <!-- Site JS (global) -->
+  <script src="js/main.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components/navbar.js"></script>
+  <script src="js/components/modal.js"></script>
+
+  <script>
+    // Initialize modal demo trigger after DOM is ready
+    $(function() {
+      // Attach demo modal to a FAB-like trigger
+      $('#openModalDemo').on('click', function() {
+        openProductModal({ name: 'Aurora Headphones', price: '$129.99' });
+      });
+    });
+  </script>
+</body>
+</html>

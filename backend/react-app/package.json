@@ -1,0 +1,33 @@
+{
+  "name": "react-ts-vite-tailwind-scaffold",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "eslint": "*",
+    "eslint-config-prettier": "*",
+    "eslint-plugin-prettier": "*",
+    "eslint-plugin-react": "*",
+    "eslint-plugin-react-hooks": "*",
+    "prettier": "*",
+    "typescript": "*",
+    "vite": "*",
+    "@vitejs/plugin-react": "*",
+    "tailwindcss": "*",
+    "autoprefixer": "*",
+    "postcss": "*"
+  }
+}

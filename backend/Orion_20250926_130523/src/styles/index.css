@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: small utility to visually indicate focus for accessibility */
+:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.8);
+  outline-offset: 2px;
+}

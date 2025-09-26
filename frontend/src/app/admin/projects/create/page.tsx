@@ -2,26 +2,138 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import OpenAI from 'openai';
+import axios from "axios";
+
 
 export default function ChatApp() {
-  const [conversations] = useState([
-    { id: "1", title: "General" },
-    { id: "2", title: "Support" },
-    { id: "3", title: "Project X" },
-  ]);
 
-  const [activeConv, setActiveConv] = useState(conversations[0].id);
+
+
+  const [activeConv, setActiveConv] = useState('');
+
+  const [project, setProject] = useState({});
+  const [projects, setProjects] = useState([{}]);
   const [prompt, setPrompt] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState('static_site');
   const [isGenerating, setIsGenerating] = useState(false);
 
 
+
   const [messages, setMessages] = useState<Array<{ id: string; from: "me" | "them"; text: string; time?: string }>>([
-    { id: "m1", from: "them", text: "Hey! Welcome to the chat.", time: "09:45" },
-    // { id: "m2", from: "me", text: "Thanks — this UI looks great.", time: "09:46" },
-    // { id: "m3", from: "them", text: "You can type below to send a message.", time: "09:47" },
+    
   ]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const res = await axios.get("http://localhost:3001/api/v1/projects");
+        setProjects(res.data?.data ?? []);
+      } catch (err: unknown) {
+        // typed error handling
+        if (axios.isAxiosError(err)) {
+          console.error("API error:", err.response?.data ?? err.message);
+        } else {
+          console.error("Unexpected error:", err);
+        }
+      }
+    }
+    fetchProjects();
+  }, []);
+
+
+  useEffect(() => {
+    console.log("This is projects", projects);
+  }, [projects]);
+
+
+
+
+  useEffect(() => {
+    if (!activeConv) return;
+
+    let canceled = false;
+    
+    async function fetchProjectMessages() {
+      try {
+        const res = await axios.get(`http://localhost:3001/api/v1/projects/${activeConv}`);
+        // try several shapes just in case
+        const proj = res.data?.data?.project ?? res.data?.data ?? res.data ?? {};
+        if (canceled) return;
+        setProject(proj);
+
+        const rawMsgs: any[] = Array.isArray(res.data?.data?.messages) ? res.data?.data?.messages : res.data?.data?.messages ?? [];
+
+        // sort by createdAt/updatedAt then take last 10 (latest)
+        const sorted = rawMsgs
+          .slice()
+          .sort((a, b) => {
+            const ta = new Date(a.createdAt ?? a.updatedAt ?? 0).getTime();
+            const tb = new Date(b.createdAt ?? b.updatedAt ?? 0).getTime();
+            return ta - tb;
+          });
+        const last10 = sorted.slice(-10);
+
+        const uiMessages: Array<{ id: string; from: "me" | "them"; text: string; time?: string }> = [];
+        const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+        last10.forEach((m: any) => {
+          const time = new Date(m.createdAt ?? m.updatedAt ?? Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+          // possible shapes
+          const userText = m.message ?? m.text ?? m.content ?? m.user?.text ?? "";
+          const aiText = m.plain_text ?? m.reply ?? m.answer ?? m.aiResponse ?? m.response ?? "";
+
+          // If we have both a user message and an AI response, push them as two messages (me then them)
+          if (userText && aiText) {
+            uiMessages.push({
+              id: m._id ? `${m._id}-u` : genId(),
+              from: "me",
+              text: userText,
+              time,
+            });
+            uiMessages.push({
+              id: m._id ? `${m._id}-a` : genId(),
+              from: "them",
+              text: aiText,
+              time,
+            });
+          } else {
+            // fallback: single message mapping like before
+            uiMessages.push({
+              id: m._id ?? m.id ?? genId(),
+              from:
+              m.from === "me" ||
+              m.from === "user" ||
+              m.sender === "user" ||
+              m.role === "user"
+                ? "me"
+                : "them",
+                  text: userText || aiText || "",
+                  time,
+                });
+              }
+        });
+
+        if (!canceled) setMessages(uiMessages);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          console.error("API error:", err.response?.data ?? err.message);
+        } else {
+          console.error("Unexpected error:", err);
+        }
+      }
+    }
+
+    fetchProjectMessages();
+
+    return () => {
+      canceled = true;
+    };
+  }, [activeConv]);
+
+  
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -30,125 +142,121 @@ export default function ChatApp() {
   async function handleSend() {
     const trimmed = input.trim();
     if (!trimmed) return;
-
-    const newMsg = {
-      id: Date.now().toString(),
-      from: "me" as const,
-      text: trimmed,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setMessages((m) => [...m, newMsg]);
-
-
-
-
-
     await handleGenerateApp(trimmed);
+  }
 
-    // setInput("");
-
-
-
-
-
-
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") handleSend();
   }
 
 
 
+function renderMessageText(text: string) {
+  // Split by Markdown code blocks
+  const parts = text.split(/```([\s\S]*?)```/g);
+
+  return parts.flatMap((part, i) => {
+    if (i % 2 === 1) {
+      // ✅ Inside backticks → treat as code
+      const [firstLine, ...restLines] = part.split("\n");
+      const remaining = restLines.join("\n");
+
+      return (
+        <pre key={i} className="bg-slate-800 text-white p-2 rounded overflow-x-auto">
+          <div className="flex items-center justify-between border-b border-slate-700 pb-2">
+            <div className="text-sm font-mono break-words text-white">{firstLine}</div>
+            <button
+              type="button"
+              className="ml-3 text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-white"
+              onClick={() => void navigator.clipboard?.writeText(part)}
+            >
+              Copy
+            </button>
+          </div>
+          <code className="whitespace-pre-wrap">{remaining}</code>
+        </pre>
+      );
+    } else {
+      // Outside backticks → render normally
+      const lines = part.split("\n");
+      return lines.map((line, j) => {
+        const trimmedLine = line.trim();
+        if (trimmedLine === "") return <br key={`${i}-${j}`} />;
+        return <span key={`${i}-${j}`} dangerouslySetInnerHTML={{ __html: line }} />;
+      });
+    }
+  });
+}
 
 
-    const handleGenerateApp = async (prompt:string) => {
-        if (!prompt.trim()) {
-            alert("Please enter some requirements.");
-            return;
-        }
-        // window?.puter?.ai?.chat("What are the benefits of exercise?", { model: "gpt-5-nano" })
-        // .then(response => {
-        //     console.log(response);
-        // });
-
-        // return;
-        
 
 
-        const templatePrompt = getTemplatePrompt('react');
-        const fullPrompt = `${templatePrompt}
+
+
+
+
+  const handleGenerateApp = async (prompt:string) => {
+
+    
+      if (!prompt.trim()) {
+          alert("Please enter some requirements.");
+          return;
+      }
+      
+      const trimmed = prompt;
+      const newMsg = {
+        id: Date.now().toString(),
+        from: "me" as const,
+        text: trimmed,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((m) => [...m, newMsg]);
+      setPrompt('');
+      setInput('');
+      // First, add a "placeholder" message so you can update it as the stream comes in
+      const newMsgId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      setMessages((m) => [
+        ...m,
+        {
+          id: newMsgId,
+          from: "them",
+          text: "Thinking.....", // start empty, will fill with stream
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+
+      // Start streaming the response
+      //  await puter?.auth?.signOut();
+      const isSignedin = await puter?.auth?.isSignedIn();
+      if(!isSignedin){
+        await puter?.auth?.signIn();
+      }
+
+      let fullPrompt = ``;
+
+      if (!project?._id) {
+        const templatePrompt = getTemplatePrompt(selectedTemplate);
+        fullPrompt += `${templatePrompt}
 
         Additional requirements: ${prompt}`;
+      } else {
+        fullPrompt += `${prompt}`;
+      }
+      
 
-        setIsGenerating(true);
+
+
+
+      setIsGenerating(true);
 
 
 
       const chatMessages = [{
           role: 'system',
-          content: `You are AI Assistant, a helpful and knowledgeable AI assistant. 
+          content: `You are Dyad AI Assistant, a helpful and knowledgeable AI assistant. 
           You specialize in coding, content creation, and general knowledge. 
           Provide detailed, helpful responses and use markdown formatting for code blocks.
-          Current user: Guest`
-        },
-        { 
-          role: 'user', 
-          content:fullPrompt
-        }
-      ];
-
-
-      console.log(chatMessages);
-      
-      const response = await window?.puter?.ai?.chat(chatMessages, { model: "gpt-5-nano" });
-      
-      // console.log(response);
-
-
-        // const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        //   method: 'POST',
-        //   headers: {
-        //     Authorization: 'Bearer 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',
-        //     // 'HTTP-Referer': '<YOUR_SITE_URL>',
-        //     // 'X-Title': '<YOUR_SITE_NAME>',
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({
-        //     model: 'deepseek/deepseek-chat-v3.1',
-        //     messages: chatMessages,
-        //   }),
-        // });
-
-        
-        const message = response.message?.content ?? '';
-      
-        // const message =  "Below is a complete, production-ready React 18 + TypeScript scaffold using Vite and TailwindCSS, designed as a drop-in replacement for a fresh vite@latest react-ts project. It includes all requested parts: public/index.html, src with components/hooks/utils/types, tooling configs (Vite, TS, Tailwind, ESLint, Prettier, etc.), and a README. It also prints “Hello World” as part of the demo.\n\nNote: All code blocks are wrapped in Markdown code blocks as requested. TypeScript files are shown with the JS block label per your heuristic.\n\npublic/index.html\n```html\n<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <title>React TS Tailwind Scaffold</title>\n  </head>\n  <body>\n    <div id=\"root\"></div>\n    <script type=\"module\" src=\"/src/main.tsx\"></script>\n  </body>\n</html>\n```\n\ntsconfig.node.json\n```json\n{\n  \"compilerOptions\": {\n    \"module\": \"commonjs\",\n    \"target\": \"es2020\",\n    \"lib\": [\"es2020\"],\n    \"strict\": false\n  }\n}\n```\n\ntsconfig.json\n```json\n{\n  \"compilerOptions\": {\n    \"target\": \"es2020\",\n    \"lib\": [\"dom\", \"dom.iterable\", \"es2020\"],\n    \"jsx\": \"react-jsx\",\n    \"module\": \"esnext\",\n    \"moduleResolution\": \"node\",\n    \"allowJs\": true,\n    \"skipLibCheck\": true,\n    \"strict\": true,\n    \"forceConsistentCasingInFileNames\": true,\n    \"resolveJsonModule\": true,\n    \"isolatedModules\": true,\n    \"esModuleInterop\": true,\n    \"useDefineForClassFields\": true\n  },\n  \"include\": [\"src\"]\n}\n```\n\nvite.config.ts\n```ts\nimport { defineConfig } from 'vite'\nimport react from '@vitejs/plugin-react'\n\nexport default defineConfig({\n  plugins: [react()],\n  server: {\n    port: 5173,\n    host: true\n  }\n})\n```\n\ntailwind.config.cjs\n```js\n/** @type {import('tailwindcss').Config} */\nmodule.exports = {\n  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx,html}'],\n  theme: {\n    extend: {}\n  },\n  plugins: []\n}\n```\n\npostcss.config.cjs\n```js\nmodule.exports = {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {}\n  }\n}\n```\n\npublic/styles (not a separate folder, Tailwind is loaded via src/styles)\n\nsrc/styles/index.css\n```css\n@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n/* Optional: global styles for accessibility / typography */\n:root {\n  --bg: 0 0 0;\n}\n```\n\nsrc/main.tsx\n```js\nimport React from 'react'\nimport { createRoot } from 'react-dom/client'\nimport './styles/index.css'\nimport App from './App'\n\nconst rootEl = document.getElementById('root')\nif (rootEl) {\n  createRoot(rootEl).render(\n    <React.StrictMode>\n      <App />\n    </React.StrictMode>\n  )\n}\n```\n\nsrc/App.tsx\n```js\nimport React from 'react'\nimport Nav from './components/Nav'\nimport Card from './components/Card'\nimport Button from './components/Button'\nimport { Product } from './types'\nimport { formatDate } from './utils/formatDate'\nimport { useToggle } from './hooks/useToggle'\nimport { coerceToNumber } from './utils/classNames' // small helper usage example\n\n// Simple Hello World demonstration\nconst HelloWorld = () => <span className=\"font-semibold text-blue-600\">Hello World</span>\n\nconst sampleProduct: Product = {\n  id: 'p-1001',\n  name: 'Aurora Headphones',\n  price: 149.99,\n  dateAdded: new Date().toISOString()\n}\n\nexport default function App() {\n  const [isPanelOpen, togglePanel] = useToggle(false)\n\n  return (\n    <div className=\"min-h-screen bg-gray-50 text-gray-900\">\n      <Nav />\n      <main className=\"max-w-7xl mx-auto p-4 space-y-6\">\n        <section className=\"rounded-lg bg-white shadow p-4 md:p-6\" aria-label=\"intro\">\n          <div className=\"flex items-center gap-3\">\n            <div className=\"h-9 w-9 rounded-full bg-blue-500 text-white flex items-center justify-center\" aria-label=\"logo\">\n              🪶\n            </div>\n            <div>\n              <h1 className=\"text-2xl font-semibold\">React 18 + TS + Tailwind Scaffold</h1>\n              <p className=\"text-sm text-gray-600\">A ready-to-run app with examples of components, hooks, utilities, and types.</p>\n            </div>\n          </div>\n          <div className=\"mt-4\">\n            <HelloWorld />\n          </div>\n        </section>\n\n        <section aria-label=\"cards\" className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4\">\n          <Card title=\"Product Spotlight\" subtitle={`Last updated: ${formatDate(sampleProduct.dateAdded)}`} className=\"\">\n            <p className=\"text-sm text-gray-700\">\n              {sampleProduct.name} is available for <strong>${sampleProduct.price.toFixed(2)}</strong>.\n            </p>\n            <p className=\"text-xs text-gray-500 mt-1\">Product ID: {sampleProduct.id}</p>\n          </Card>\n\n          <Card title=\"Interactivity\" subtitle=\"Demo components\" className=\"\">\n            <div className=\"space-y-2\">\n              <Button variant=\"primary\" onClick={() => alert('Button clicked!')}>Primary Action</Button>\n              <Button variant=\"secondary\" onClick={() => alert('Secondary action')}>Secondary Action</Button>\n              <div className={classNames('mt-2', coerceToNumber('1') ? 'text-green-600' : 'text-red-600')}>\n                State: Toggle panel is {isPanelOpen ? 'OPEN' : 'CLOSED'}\n              </div>\n              {isPanelOpen && (\n                <div className=\"p-2 rounded border border-gray-200 bg-gray-50 text-sm\">\n                  This panel is toggled with useToggle hook.\n                </div>\n              )}\n              <button\n                onClick={togglePanel}\n                className=\"px-3 py-1.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200\"\n              >\n                Toggle Panel\n              </button>\n            </div>\n          </Card>\n\n          <Card title=\"Utilities\" subtitle=\"Small helpers in TS\" className=\"\">\n            <div className=\"text-sm text-gray-700 space-y-1\">\n              <div>formatDate(new Date()) -> {formatDate(new Date())}</div>\n              <div>classNames helper available.</div>\n            </div>\n          </Card>\n        </section>\n      </main>\n    </div>\n  )\n}\n\n// Small helper to showcase inline TS usage\nfunction classNames(...args: any[]) {\n  return args.filter(Boolean).join(' ')\n}\n```\n\nsrc/components/Button.tsx\n```js\nimport React from 'react'\n\ntype ButtonProps = {\n  onClick?: () => void\n  children: React.ReactNode\n  variant?: 'primary' | 'secondary'\n  className?: string\n}\n\nexport default function Button({ onClick, children, variant = 'primary', className = '' }: ButtonProps) {\n  const base = 'px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors'\n  const color =\n    variant === 'primary'\n      ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'\n      : 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500'\n\n  return (\n    <button onClick={onClick} className={[base, color, className].join(' ')} type=\"button\">\n      {children}\n    </button>\n  )\n}\n```\n\nsrc/components/Card.tsx\n```js\nimport React from 'react'\nimport { classNames } from '../utils/classNames' // optional, reuse helper if you want\n\ninterface CardProps {\n  title: string\n  subtitle?: string\n  children?: React.ReactNode\n  className?: string\n}\n\nexport default function Card({ title, subtitle, children, className }: CardProps) {\n  return (\n    <section className={classNames('bg-white border border-gray-200 rounded-lg shadow-sm p-4', className)}>\n      <header className=\"mb-2\">\n        <h3 className=\"text-lg font-semibold\">{title}</h3>\n        {subtitle && <p className=\"text-sm text-gray-500\">{subtitle}</p>}\n      </header>\n      <div>{children}</div>\n    </section>\n  )\n}\n```\n\nsrc/components/Nav.tsx\n```js\nimport React from 'react'\n\nexport default function Nav() {\n  return (\n    <nav className=\"bg-white border-b border-gray-200\" aria-label=\"Main navigation\">\n      <div className=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\">\n        <div className=\"flex items-center justify-between h-16\">\n          <div className=\"flex items-center gap-3\">\n            <div className=\"h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center\">\n              🚀\n            </div>\n            <span className=\"font-semibold text-xl\">Scaffold</span>\n          </div>\n          <div className=\"hidden md:flex space-x-4\" aria-label=\"Navigation links\">\n            <a href=\"#\" className=\"text-sm font-medium text-gray-700 hover:text-blue-600\">\n              Home\n            </a>\n            <a href=\"#\" className=\"text-sm font-medium text-gray-700 hover:text-blue-600\">\n              Products\n            </a>\n            <a href=\"#\" className=\"text-sm font-medium text-gray-700 hover:text-blue-600\">\n              About\n            </a>\n          </div>\n          <div className=\"md:hidden\" aria-label=\"Mobile menu button\">\n            <button className=\"px-2 py-1 rounded bg-gray-100 text-sm\" aria-label=\"Open menu\">\n              Menu\n            </button>\n          </div>\n        </div>\n      </div>\n    </nav>\n  )\n}\n```\n\nsrc/hooks/useToggle.ts\n```js\nimport { useState } from 'react'\n\nexport function useToggle(initial = false): [boolean, () => void, (v: boolean) => void] {\n  const [value, setValue] = useState<boolean>(initial)\n  const toggle = () => setValue((v) => !v)\n  const set = (v: boolean) => setValue(v)\n  return [value, toggle, set]\n}\n```\n\nsrc/hooks/useFetch.ts\n```js\nimport { useEffect, useState } from 'react'\n\nexport function useFetch<T = unknown>(url: string) {\n  const [data, setData] = useState<T | null>(null)\n  const [loading, setLoading] = useState<boolean>(false)\n  const [error, setError] = useState<string | null>(null)\n\n  useEffect(() => {\n    let cancelled = false\n    if (!url) return\n    setLoading(true)\n    fetch(url)\n      .then((res) => {\n        if (!res.ok) throw new Error(`Request failed with status ${res.status}`)\n        return res.json()\n      })\n      .then((json) => {\n        if (!cancelled) {\n          setData(json as T)\n          setError(null)\n        }\n      })\n      .catch((err) => {\n        if (!cancelled) {\n          setError((err as Error).message)\n        }\n      })\n      .finally(() => {\n        if (!cancelled) setLoading(false)\n      })\n    return () => {\n      cancelled = true\n    }\n  }, [url])\n\n  return { data, loading, error }\n}\n```\n\nsrc/utils/classNames.ts\n```js\nexport function classNames(...args: any[]) {\n  return args.filter(Boolean).join(' ')\n}\n```\n\nBecause you asked for two utilities, I’m including a small helper export to demonstrate usage in App. If you prefer a dedicated file path, you can rename this to src/utils/classNames.ts and export as default as needed.\n\nsrc/utils/formatDate.ts\n```js\nexport function formatDate(input: string | Date): string {\n  try {\n    const d = typeof input === 'string' ? new Date(input) : input\n    return d.toLocaleDateString(undefined, {\n      year: 'numeric',\n      month: 'short',\n      day: 'numeric'\n    })\n  } catch {\n    return String(input)\n  }\n}\n```\n\nsrc/types/index.ts\n```ts\nexport type Product = {\n  id: string\n  name: string\n  price: number\n  dateAdded: string\n}\n\n// You can add global app types here in the future\n```\n\nsrc/types/global.ts\n```ts\n// Example of a minimal global-type file (left intentionally tiny for scaffolding)\nexport type ID = string | number\n```\n\nREADME.md\n```md\n# React 18 + TypeScript + Vite + TailwindCSS Scaffold\n\nThis is a production-ready scaffold of a React 18 app using TypeScript, Vite, and TailwindCSS. It includes:\n- Public entry: public/index.html\n- A TS + React app under src/ with components, hooks, utils, and types\n- Tailwind-based responsive layout\n- ESLint + Prettier configuration\n- Basic documentation and run steps\n\nHello World\n- The app renders a Hello World snippet as part of the intro section.\n\nProject structure (highlights)\n- public/index.html: minimal entry page\n- src/main.tsx: React 18 entry\n- src/App.tsx: root component with Tailwind layout\n- src/components/: Button, Card, Nav\n- src/hooks/: useToggle, useFetch\n- src/utils/: formatDate, classNames\n- src/types/: Product type example\n- Tailwind CSS setup with PostCSS\n- ESLint + Prettier configs and ignore files\n- README.md with setup & run instructions\n\nUsage\n- npm install\n- npm run dev to start Vite dev server\n- npm run build to generate a production bundle\n- npm run preview to preview the production build\n\nNote\n- The code is designed to replace/add to a fresh Vite + React + TS project.\n- All code blocks are ready to paste into respective files.\n\n```\n\npackage.json\n```json\n{\n  \"name\": \"vite-react-ts-tailwind-scaffold\",\n  \"private\": true,\n  \"version\": \"0.1.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"vite build\",\n    \"preview\": \"vite preview --port 5174\",\n    \"lint\": \"eslint . --ext .ts,.tsx,.js,.jsx\",\n    \"format\": \"prettier --write .\"\n  },\n  \"dependencies\": {\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\"\n  },\n  \"devDependencies\": {\n    \"@types/react\": \"^18.2.14\",\n    \"@types/react-dom\": \"^18.2.6\",\n    \"eslint\": \"^8.48.0\",\n    \"eslint-config-prettier\": \"^9.0.0\",\n    \"eslint-plugin-prettier\": \"^4.2.0\",\n    \"eslint-plugin-react\": \"^7.32.0\",\n    \"eslint-plugin-react-hooks\": \"^4.9.0\",\n    \"prettier\": \"^2.8.8\",\n    \"tailwindcss\": \"^3.6.7\",\n    \"postcss\": \"^8.4.26\",\n    \"autoprefixer\": \"^10.4.13\",\n    \"typescript\": \"^5.2.2\",\n    \"vite\": \"^5.6.0\",\n    \"@vitejs/plugin-react\": \"^2.9.0\"\n  }\n}\n```\n\n.eslintrc.cjs\n```js\nmodule.exports = {\n  root: true,\n  env: {\n    browser: true,\n    es2021: true\n  },\n  parser: '@typescript-eslint/parser',\n  parserOptions: {\n    ecmaVersion: 12,\n    sourceType: 'module',\n    ecmaFeatures: {\n      jsx: true\n    }\n  },\n  settings: {\n    react: {\n      version: 'detect'\n    }\n  },\n  extends: [\n    'eslint:recommended',\n    'plugin:react/recommended',\n    'plugin:react-hooks/recommended',\n    'plugin:@typescript-eslint/recommended',\n    'plugin:prettier/recommended'\n  ],\n  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'prettier'],\n  rules: {\n    'prettier/prettier': 'error'\n  }\n}\n```\n\n.prettierrc\n```json\n{\n  \"printWidth\": 100,\n  \"semi\": true,\n  \"singleQuote\": true,\n  \"jsxSingleQuote\": true,\n  \"trailingComma\": \"all\",\n  \"arrowParens\": \"avoid\",\n  \"endOfLine\": \"auto\"\n}\n```\n\n.eslintignore\n```\nnode_modules/\ndist/\nbuild/\ncoverage/\nvite.config.ts\npublic/build/\n```\n\n.prettierignore\n```\nnode_modules/\ndist/\nbuild/\ncoverage/\npublic/build/\n```\n\nNotes and tips\n- The app uses the latest stable patterns for React 18 + TypeScript with Vite.\n- Tailwind is configured via tailwind.config.cjs and PostCSS config for Tailwind directives in src/styles/index.css.\n- The example components illustrate accessible, responsive Tailwind layouts.\n- Inline comments are included in key files to explain design decisions.\n- Hello World is printed in the intro section via a small HelloWorld component.\n\nWhat to paste into a fresh Vite project\n- Replace the default files in a new Vite + React + TS template with the above files. If you already have a Vite project, you can merge the src/ and public/ folders and add the config files and package.json accordingly.\n- After placing all files, run:\n  - npm install\n  - npm run dev\n\nThis scaffold should render a clean, responsive UI using Tailwind and provide a solid starting point for production-grade apps.\n\nIf you want me to tailor specific dependencies to a different major version, or want a minimal Next.js option instead, I can adapt quickly.";
-
-        // console.log(message);
-        
-        const fileSaveResponse = await fetch('http://127.0.0.1:3001/api/v1/save-files', {
-          method: 'POST',
-          headers: {
-            // Authorization: 'Bearer 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',
-            // 'HTTP-Referer': '<YOUR_SITE_URL>',
-            // 'X-Title': '<YOUR_SITE_NAME>',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messages: message,
-          }),
-        });
-        // now let save to the backend
-        console.log(fileSaveResponse);
-
-        setPrompt('');
-        setIsGenerating(false);
-
-    };
-
-
-
-  const getTemplatePrompt = (template: string) => {
-        const basePrompts = {
-        react:`
           Always wrap all code in proper Markdown code blocks.
           - Try to detect the language heuristically:
             - JS/TS → use \`\`\`js
@@ -161,114 +269,376 @@ export default function ChatApp() {
           - Plain explanations stay outside backticks.
           - Never break code into pieces unnecessarily.
           - Output should be ready to render in a code viewer with copy buttons.
+          Current user: Guest`
+        },
         
-          User request:
-          Create a complete, production-ready React 18 application scaffold using TypeScript, Vite, and TailwindCSS with the latest stable versions (as of 2025). The project should use public/index.html as the entry point and include all necessary configs, tooling, example components, hooks, utils, types, and a README.
+      ];
+
+      if (messages.length > 0) {
+        messages.reverse().forEach((message) => {
+          const oldMessage = {
+            role: message.from === 'me' ? 'user' : 'assistant',
+            content: message.text
+          };
+          chatMessages.push(oldMessage);
+        });
+      }
+
+
+
+      const stream = await window?.puter?.ai?.chat(chatMessages, { 
+        model: "gpt-5-nano",
+        stream: true,
+      });
+
+
+
+      // Listen for chunks as they arrive
+      let partialText = '';
+      const allChunks: any[] = [];
+      for await (const chunk of stream) {
+        partialText += chunk?.text ?? "";
+        allChunks.push(chunk); // save each chunk
+        // Update the message text progressively
+
+
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === newMsgId ? { ...msg, text: partialText } : msg
+          )
+        );
+
+
+      }
+
+  
+    // let save to backend
+
+    const blob = new Blob([partialText], { type: "text/plain" });
+    const responseBlob = new Blob([JSON.stringify(allChunks)], { type: "application/json" });
+
+    const formData = new FormData();
+    formData.append("plain_text", blob, "plain_text.txt");
+    formData.append("message", trimmed ?? "");
+    formData.append("response", responseBlob, "response.json");
+    formData.append("project_id", project?._id ?? "");
+    formData.append("project_type", selectedTemplate);
+
+
+    const backendResponse = await axios.post("http://localhost:3001/api/v1/projects",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    setProject(backendResponse.data?.data?.project ?? {});
+    setPrompt('');
+
+    setIsGenerating(false);
+  };
+
+  const templates = [
+      {
+        "text":"React",
+        "value":"react",
+      },
+      {
+        "text":"Static Site",
+        "value":"static_site",
+      },
+      {
+        "text":"Vue JS",
+        "value":"vue",
+      },
+      {
+        "text":"Next JS",
+        "value":"nextjs",
+      },
+      {
+        "text":"MERN STACK",
+        "value":"mern",
+      },
+      {
+        "text":"Laravel",
+        "value":"laravel",
+      },
+  ];
+
+const getTemplatePrompt = (template: string) => {
+      const basePrompts = {
+      react:`
+        User request:
+        Create a complete, production-ready React 18 application scaffold using TypeScript, Vite, and TailwindCSS with the latest stable versions (as of 2025). The project should use public/index.html as the entry point and include all necessary configs, tooling, example components, hooks, utils, types, and a README.
+
+          Requirements:
+
+          1. Project Layout:
+          - public/index.html: minimal, ready to serve the app.
+          - src/:
+            - main.tsx: React 18 entry using createRoot.
+            - App.tsx: root component with Tailwind responsive layout.
+            - components/: at least 3 reusable components (Button, Card, Nav).
+            - hooks/: at least 2 custom hooks (useToggle, useFetch).
+            - utils/: at least 2 utility functions (formatDate, classNames).
+            - types/: global types and a sample Product type.
+            - styles/index.css: loading Tailwind directives.
+
+          2. Tooling & Config:
+          - Vite config: vite.config.ts configured for React + TypeScript with Hot Module Replacement.
+          - TypeScript configs: tsconfig.json and minimal tsconfig.node.json for Node tooling.
+          - package.json with scripts: dev, build, preview, lint, format.
+          - Tailwind config: tailwind.config.cjs with content paths and basic theme extend.
+          - PostCSS config if needed.
+
+          3. **package.json** with all required latest stable dependencies
+
+          4. Linting & Formatting:
+          - ESLint: TypeScript + React, recommended rules, Prettier integration (.eslintrc.cjs).
+          - Prettier config (.prettierrc).
+          - Ignore files: .eslintignore and .prettierignore.
+
+          5. Example Components & Pages:
+          - Responsive, accessible examples using Tailwind CSS.
+          - Example usage of hooks, utils, and types in the app.
+
+          6. Additional:
+          - README.md: setup, run instructions, brief explanations.
+          - Keep code concise, clear, and include helpful inline comments.
+
+          Deliverables:
+          - public/index.html (minimal, ready to serve)
+          - tsconfig.node.json (minimal for Node tooling)
+          - All src/ files with examples
+          - Configs: vite.config.ts, tailwind.config.cjs, package.json, ESLint & Prettier configs
+
+          Notes:
+          - Ensure latest stable dependencies for all packages.
+          - public/index.html is the entry point.
+          - Provide ready-to-paste example files that can replace/add to a freshly created vite@latest react-ts project.
+
+          Important:
+          - Provide a complete package.json for the project.
+          - Provide all config files: tsconfig.json, vite.config.ts, tailwind.config.cjs, ESLint, Prettier.
+          ;`,
+
+
+
+      static_site:`
+        User request:
+        Create a **modern, production-ready static website scaffold** using **HTML, CSS, JS, jQuery, and TailwindCSS** with the **latest stable CDN links (as of 2025)**.  
+        All pages must include **Tailwind CSS CDN** and **jQuery CDN**.
+
+        ✨ Design Direction (Important):
+        - Use a **modern, minimal, and responsive design** based on current 2025 web UI trends.
+        - Prioritize **dark/light mode toggle**, smooth **scroll animations**, **sticky navigation**, and elegant **hover effects**.
+        - Use **Tailwind utility classes** heavily for layout and responsiveness.
+        - Include **subtle motion effects** (e.g., fade-in, slide-in) using CSS or small jQuery snippets.
+        - Use **modern color palettes** (e.g., soft gradients, glassmorphism backgrounds, neumorphic cards, or minimal light/dark contrast).
+        - Typography should feel clean and professional (e.g., Inter, Poppins, Roboto).
+
+        Requirements:
+
+        1. **Project Layout:**
+          - index.html: main landing page (hero, features, CTA, footer).
+          - about.html: team and company info page.
+          - contact.html: form page with validation and AJAX submission.
+          - css/
+            - styles.css: custom overrides, animations, and theme variables.
+          - js/
+            - main.js: global site logic, dark/light toggle, and event handling.
+            - utils.js: at least 2 reusable utility functions.
+            - components/
+              - navbar.js: sticky + responsive navigation bar.
+              - modal.js: modal popup with animation and accessibility.
+
+        2. **HTML Requirements:**
+          - Responsive, semantic HTML with meta tags for SEO.
+          - Include Tailwind CDN in <head>.
+          - Include jQuery CDN before </body>.
+          - Add **favicon**, **social preview meta tags**, and basic **OpenGraph tags**.
+          - Use reusable sections (hero, features, testimonials, CTA, footer).
+          - Include **dark/light mode toggle**.
+
+        3. **JS Requirements:**
+          - main.js: global init (dark mode toggle, scroll reveal animations).
+          - utils.js: example utilities (formatDate, debounce, scrollToSection).
+          - navbar.js: mobile toggle, active link highlight on scroll.
+          - modal.js: open/close logic with fade transitions.
+
+        4. **CSS Requirements:**
+          - styles.css: theme variables, animations (fade, slide, scale), and custom classes.
+          - Demonstrate how to extend Tailwind with custom utilities.
+
+        5. **Examples & Interactivity:**
+          - Animated hero section on index.html with a CTA button.
+          - Contact form with validation + AJAX submission via jQuery.
+          - Modal popup with smooth transitions.
+          - Responsive navbar that highlights current section.
+          - Dark/light mode toggle stored in localStorage.
+
+        6. **Additional:**
+          - README.md: setup instructions, file structure, customization guide.
+          - Code must be **copy-paste ready** for GitHub Pages, Netlify, or Vercel.
+          - Comment important parts of the code.
+
+        Deliverables:
+          - index.html
+          - about.html
+          - contact.html
+          - css/styles.css
+          - js/main.js
+          - js/utils.js
+          - js/components/navbar.js
+          - js/components/modal.js
+          - README.md
+
+        Notes:
+          - **Every HTML page must include Tailwind CSS CDN and jQuery CDN.**
+          - Use the latest stable CDN versions available as of 2025.
+          - Provide **complete, production-ready, trending, and well-commented code** for all files.
+      `,
+      
+      nextjs: `Create a complete Next.js 14 application with App Router, TypeScript, and TailwindCSS.
+      Include:
+      - app/ directory with routing structure
+      - components/ for reusable UI components
+      - lib/ for utility functions and configurations
+      - types/ for TypeScript definitions
+      - API routes for backend functionality
+      - Authentication with NextAuth.js
+      - Database integration with Prisma`,
+      
+      mern: `Create a complete MERN stack application (MongoDB, Express.js, React, Node.js).
+      Frontend (React):
+      - src/components/ for React components
+      - src/pages/ for page components
+      - src/hooks/ for custom hooks
+      - src/services/ for API calls
+      
+      Backend (Node.js/Express):
+      - server/src/ for source code
+      - server/src/routes/ for API routes
+      - server/src/models/ for MongoDB models
+      - server/src/middleware/ for custom middleware
+      - JWT authentication
+      - MongoDB with Mongoose`,
+      
+      vue: `Create a complete Vue.js 3 application with Composition API, TypeScript, and Vite.
+      Include:
+      - src/components/ for Vue components
+      - src/composables/ for Composition API functions
+      - src/utils/ for utility functions
+      - src/types/ for TypeScript definitions
+      - Vue Router for navigation
+      - Pinia for state management
+      - TailwindCSS for styling`,
+      
+      laravel:`
+            User request:
+            Create a **complete, modern Laravel 11+ application scaffold** using **PHP 8+**, **MySQL**, and **Vite + TailwindCSS** for frontend.  
+            The project must be production-ready, following best practices, PSR coding style, environment separation, Laravel Sanctum authentication, and modern UI/UX practices.
+
+            ✨ Key Design & Frontend Requirements:
+            - Responsive, semantic Blade templates using TailwindCSS (latest CDN or Vite build).
+            - Include a dark/light mode toggle.
+            - Use modern UI patterns (hero section, cards, modals, CTA sections, sticky navbar).
+            - Smooth animations (fade-in, slide-in) via Tailwind or minimal JS/jQuery.
+            - Frontend tooling with Vite and Tailwind configured for Laravel.
 
             Requirements:
 
-            1. Project Layout:
-            - public/index.html: minimal, ready to serve the app.
-            - src/:
-              - main.tsx: React 18 entry using createRoot.
-              - App.tsx: root component with Tailwind responsive layout.
-              - components/: at least 3 reusable components (Button, Card, Nav).
-              - hooks/: at least 2 custom hooks (useToggle, useFetch).
-              - utils/: at least 2 utility functions (formatDate, classNames).
-              - types/: global types and a sample Product type.
-              - styles/index.css: loading Tailwind directives.
+            1. **Project Layout:**
+              - app/
+                - Models/: User, Product/Post, Comment/Order with relationships
+                - Http/Controllers/: API + Web controllers (AuthController, ProductController)
+                - Http/Requests/: StoreProductRequest, UpdateProductRequest
+                - Policies/: example policy
+                - Providers/: custom service provider example
+              - database/
+                - migrations/: users, products/posts, comments/orders
+                - seeders/: DatabaseSeeder, UserSeeder, SampleDataSeeder
+                - factories/: model factories
+              - resources/
+                - views/: layouts/app.blade.php, home.blade.php, products/index.blade.php, auth skeleton
+                - lang/: en sample localization
+              - routes/: web.php, api.php
+              - config/: sanctum.php, cors.php modifications
+              - tests/: Feature tests for Auth, Product API, Authorization
+              - public/: favicon, basic assets
+              - .env.example, .gitignore, README.md
 
-            2. Tooling & Config:
-            - Vite config: vite.config.ts configured for React + TypeScript with Hot Module Replacement.
-            - TypeScript configs: tsconfig.json and minimal tsconfig.node.json for Node tooling.
-            - package.json with scripts: dev, build, preview, lint, format.
-            - Tailwind config: tailwind.config.cjs with content paths and basic theme extend.
-            - PostCSS config if needed.
+            2. **Frontend Tooling:**
+              - package.json: npm scripts (dev, build, preview, lint, format)
+              - vite.config.js: configured for Laravel + React/JS if needed
+              - tailwind.config.cjs: content paths, theme extend, dark mode
+              - postcss.config.cjs: Tailwind + autoprefixer
 
-            3. **package.json** with all required latest stable dependencies
+            3. **Authentication:**
+              - Full Laravel Sanctum setup for SPA + API tokens
+              - Auth routes and controllers: register, login, logout, profile
+              - Middleware applied for protected routes
 
-            4. Linting & Formatting:
-            - ESLint: TypeScript + React, recommended rules, Prettier integration (.eslintrc.cjs).
-            - Prettier config (.prettierrc).
-            - Ignore files: .eslintignore and .prettierignore.
+            4. **Database:**
+              - Proper migrations and relationships
+              - Seeders and factories with example data
+              - Example pivot tables if needed
 
-            5. Example Components & Pages:
-            - Responsive, accessible examples using Tailwind CSS.
-            - Example usage of hooks, utils, and types in the app.
+            5. **Controllers & Requests:**
+              - Resource controllers (index/show/store/update/destroy)
+              - Form requests for validation
+              - API Resource classes for JSON responses
 
-            6. Additional:
-            - README.md: setup, run instructions, brief explanations.
-            - Keep code concise, clear, and include helpful inline comments.
+            6. **Testing:**
+              - Feature tests for web and API
+              - Auth, Product CRUD, unauthorized access
+              - Use RefreshDatabase trait
 
-            Deliverables:
-            - public/index.html (minimal, ready to serve)
-            - tsconfig.node.json (minimal for Node tooling)
-            - All src/ files with examples
-            - Configs: vite.config.ts, tailwind.config.cjs, package.json, ESLint & Prettier configs
+            7. **Developer Tooling & Scripts:**
+              - composer.json (dependencies only)
+              - package.json (frontend tooling, Tailwind, Vite)
+              - phpunit.xml
+              - README.md: setup, migrate, seed, serve, npm build/dev commands
+              - Gitignore: Laravel + node_modules + vendor
+
+            8. **Additional Features:**
+              - Example Blade sections: hero, cards, modals, footer
+              - Dark/light mode toggle
+              - Scroll animations or minimal jQuery interactions
+              - Proper SEO meta tags and OpenGraph tags
+
+            Deliverables (example files/code blocks to provide):
+              - app/Models/User.php, Product.php, Comment.php
+              - app/Http/Controllers/AuthController.php, ProductController.php
+              - app/Http/Requests/StoreProductRequest.php, UpdateProductRequest.php
+              - database/migrations/xxxx_create_users_table.php, xxxx_create_products_table.php
+              - database/seeders/UserSeeder.php, SampleDataSeeder.php
+              - database/factories/ProductFactory.php
+              - resources/views/layouts/app.blade.php, home.blade.php, products/index.blade.php
+              - routes/web.php, routes/api.php
+              - config/sanctum.php, config/cors.php
+              - tests/Feature/AuthTest.php, ProductApiTest.php, AuthorizationTest.php
+              - public/: favicon or example assets
+              - package.json, vite.config.js, tailwind.config.cjs, postcss.config.cjs
+              - composer.json
+              - .env.example, .gitignore, README.md
 
             Notes:
-            - Ensure latest stable dependencies for all packages.
-            - public/index.html is the entry point.
-            - Provide ready-to-paste example files that can replace/add to a freshly created vite@latest react-ts project.
+              - Use modern PHP 8+ features: typed properties, arrow functions, null coalescing, union types.
+              - Controllers should be concise, demonstrating Form Requests, Policies, and API Resources.
+              - Frontend must leverage TailwindCSS utilities and Vite bundling.
+              - Code blocks must be ready-to-paste for a fresh Laravel install.
+              - Document optional environment-specific setup (Redis, Mail, etc.) in README.
 
             Important:
-            - Provide a complete package.json for the project.
-            - Provide all config files: tsconfig.json, vite.config.ts, tailwind.config.cjs, ESLint, Prettier.
-            ;`,
-        
-        nextjs: `Create a complete Next.js 14 application with App Router, TypeScript, and TailwindCSS.
-        Include:
-        - app/ directory with routing structure
-        - components/ for reusable UI components
-        - lib/ for utility functions and configurations
-        - types/ for TypeScript definitions
-        - API routes for backend functionality
-        - Authentication with NextAuth.js
-        - Database integration with Prisma`,
-        
-        mern: `Create a complete MERN stack application (MongoDB, Express.js, React, Node.js).
-        Frontend (React):
-        - src/components/ for React components
-        - src/pages/ for page components
-        - src/hooks/ for custom hooks
-        - src/services/ for API calls
-        
-        Backend (Node.js/Express):
-        - server/src/ for source code
-        - server/src/routes/ for API routes
-        - server/src/models/ for MongoDB models
-        - server/src/middleware/ for custom middleware
-        - JWT authentication
-        - MongoDB with Mongoose`,
-        
-        vue: `Create a complete Vue.js 3 application with Composition API, TypeScript, and Vite.
-        Include:
-        - src/components/ for Vue components
-        - src/composables/ for Composition API functions
-        - src/utils/ for utility functions
-        - src/types/ for TypeScript definitions
-        - Vue Router for navigation
-        - Pinia for state management
-        - TailwindCSS for styling`,
-        
-        laravel: `Create a complete Laravel application with modern PHP and MySQL.
-        Include:
-        - app/Models/ for Eloquent models
-        - app/Http/Controllers/ for controllers
-        - app/Http/Requests/ for form requests
-        - resources/views/ for Blade templates
-        - routes/web.php for web routes
-        - routes/api.php for API routes
-        - Database migrations and seeders
-        - Authentication with Laravel Sanctum`
-        };
+              - Assume the developer runs this locally with Composer, Node.js, and MySQL.
+              - Provide a realistic, production-ready scaffold including **backend, frontend tooling, and styling**.`
+      };
 
-    return basePrompts[template as keyof typeof basePrompts] || basePrompts.react;
-  };
+  return basePrompts[template as keyof typeof basePrompts] || basePrompts.react;
+};
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") handleSend();
-  }
+
+
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8">
@@ -282,19 +652,22 @@ export default function ChatApp() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            <div className="text-xs text-slate-400 dark:text-slate-500 px-2">Conversations</div>
-            {conversations.map((c) => (
+            <div className="text-xs text-slate-400 dark:text-slate-500 px-2">Conversations/Project</div>
+
+
+            {projects.map((c, i) => (
               <button
-                key={c.id}
-                onClick={() => setActiveConv(c.id)}
+                key={i}
+                onClick={() => setActiveConv(c?._id)}
                 className={`w-full text-left px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-between ${
-                  activeConv === c.id ? "bg-slate-100 dark:bg-slate-700 font-medium" : ""
+                  activeConv === c?._id ? "bg-slate-100 dark:bg-slate-700 font-medium" : ""
                 }`}
               >
-                <span className="text-slate-800 dark:text-slate-100">{c.title}</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">3</span>
+                <span className="text-slate-800 dark:text-slate-100">{c?.name}</span>
               </button>
             ))}
+
+
           </div>
 
           <div className="p-4 border-t border-slate-200 dark:border-slate-700">
@@ -305,30 +678,52 @@ export default function ChatApp() {
         {/* Main chat area */}
         <main className="col-span-12 md:col-span-9 flex flex-col">
           <header className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">AI</div>
-              <div>
-                <div className="font-medium text-slate-800 dark:text-slate-100">{conversations.find((c) => c.id === activeConv)?.title}</div>
-                <div className="text-xs text-slate-400 dark:text-slate-500">Active — online</div>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">AI</div>
+                <div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">
+                    {projects.find((c) => c?._id === activeConv)?.name}
+                  </div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500">Active — online</div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700">⋯</button>
-            </div>
-          </header>
+              <div className="flex items-center gap-3">
+                {/* Project Type Select */}
+                <select
+                  className="p-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  value={selectedTemplate} // state variable for selected template
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                >
+                  <option value="">Please Select</option>
+                  {templates.map((template, i) => (
+                    <option key={i} value={template.value}>
+                      {template.text}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Existing button */}
+                <button className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700">⋯</button>
+              </div>
+            </header>
+
 
           <section className="flex-1 overflow-y-auto p-6 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] dark:bg-[linear-gradient(180deg,#1f2937_0%,#111827_100%)]">
             <div className="max-w-3xl mx-auto space-y-4">
+
+
               {messages.map((m) => (
                 <div key={m.id} className={`flex ${m.from === "me" ? "justify-end" : "justify-start"}`}>
                   <div className={`rounded-xl px-4 py-2 text-sm leading-relaxed max-w-[70%] ${
                     m.from === "me" ? "bg-indigo-600 text-white rounded-br-none" : "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200 rounded-bl-none"
                   }`}>
-                    <div>{m.text}</div>
+                    <div> {renderMessageText(m.text)} </div>
                     <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 text-right">{m.time}</div>
                   </div>
                 </div>
               ))}
+
+
 
               <div ref={messagesEndRef} />
             </div>

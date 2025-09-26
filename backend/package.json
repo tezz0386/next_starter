@@ -10,7 +10,9 @@
   "author": "Tejendra Dangaura",
   "license": "MIT",
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
     "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.0.3",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
@@ -20,9 +22,11 @@
     "@types/cors": "^2.8.19",
     "@types/dotenv": "^6.1.1",
     "@types/mongoose": "^5.11.96",
+    "connect-timeout": "^1.9.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "mongoose": "^8.16.0"
+    "mongoose": "^8.16.0",
+    "multer": "^2.0.2"
   }
 }

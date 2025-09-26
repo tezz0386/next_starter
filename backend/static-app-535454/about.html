@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" class="bg-white text-gray-900" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NovaShop — About Us</title>
+  <meta name="description" content="Learn about the team and company behind NovaShop." />
+  <meta property="og:title" content="NovaShop — About Us" />
+  <meta property="og:description" content="Meet the people building a modern ecommerce experience." />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: { colors: { brand: '#7c3aed' } }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="antialiased">
+  <!-- Navbar (shared) -->
+  <header class="sticky top-0 z-50">
+    <nav id="mainNav" class="bg-white/90 dark:bg-gray-900/90 backdrop-filter backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm">
+      <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-2">
+          <span class="text-xl font-semibold tracking-wide">NovaShop</span>
+        </a>
+        <ul class="hidden md:flex items-center space-x-6">
+          <li><a href="index.html#home" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="Home">Home</a></li>
+          <li><a href="index.html#features" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="Features">Features</a></li>
+          <li><a href="index.html#shop" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="Shop">Shop</a></li>
+          <li><a href="about.html" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="About">About</a></li>
+          <li><a href="contact.html" class="nav-link px-2 py-1 text-sm hover:text-brand" aria-label="Contact">Contact</a></li>
+        </ul>
+        <div class="flex items-center gap-3">
+          <button id="themeToggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Toggle theme">🌗</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero/Intro -->
+  <section class="container mx-auto px-4 py-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+      <div class="space-y-4">
+        <h1 class="text-3xl md:text-5xl font-extrabold">Who we are</h1>
+        <p class="text-gray-600 dark:text-gray-300">NovaShop is a modern ecommerce scaffold designed for speed, accessibility, and beautiful design. Built with Tailwind CDN, it demonstrates a minimal aesthetic with glassy components, tasteful motion, and a strong focus on UX.</p>
+        <ul class="list-disc pl-5 text-gray-700 dark:text-gray-300">
+          <li>Open-source-ready structure for GitHub Pages, Netlify, or Vercel.</li>
+          <li>Dark/light mode with persistence.</li>
+          <li>Accessible navigation and semantic markup.</li>
+        </ul>
+      </div>
+      <div class="h-80 rounded-xl bg-gradient-to-br from-indigo-500 to-pink-500"></div>
+    </div>
+  </section>
+
+  <!-- Team -->
+  <section class="bg-gray-50 dark:bg-gray-900 py-14">
+    <div class="container mx-auto px-4">
+      <h2 class="text-2xl font-semibold mb-6 text-gray-900 dark:text-gray-100">Meet the Team</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="p-5 rounded-xl bg-white dark:bg-gray-800 shadow reveal">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-3" aria-label="Avatar"></div>
+          <h3 class="font-semibold">Alex Kim</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">Product Lead</p>
+        </div>
+        <div class="p-5 rounded-xl bg-white dark:bg-gray-800 shadow reveal">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-green-400 mb-3" aria-label="Avatar"></div>
+          <h3 class="font-semibold">Priya Singh</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">UI Engineer</p>
+        </div>
+        <div class="p-5 rounded-xl bg-white dark:bg-gray-800 shadow reveal">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-orange-400 mb-3" aria-label="Avatar"></div>
+          <h3 class="font-semibold">Lucas Martins</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">Frontend Engineer</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-6">
+    <div class="container mx-auto px-4 text-sm text-gray-600 dark:text-gray-300 flex items-center justify-between">
+      <p>© 2025 NovaShop — All rights reserved.</p>
+      <div class="flex items-center gap-3">
+        <a href="#" aria-label="Twitter" class="text-gray-500 hover:text-brand">Twitter</a>
+        <a href="#" aria-label="GitHub" class="text-gray-500 hover:text-brand">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- jQuery CDN -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js" crossorigin="anonymous"></script>
+  <script src="js/main.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components/navbar.js"></script>
+  <script src="js/components/modal.js"></script>
+</body>
+</html>

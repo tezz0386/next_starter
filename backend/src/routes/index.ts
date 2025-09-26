@@ -17,6 +17,15 @@ function ensureDir(dirPath: string) {
 
 
 
+
+function extractProjectRoot(response: string): string {
+  const structureRegex = /```\n(.+)\/\n/;
+  const match = structureRegex.exec(response);
+  return match ? match[1].trim() : 'project';
+}
+
+
+
 function extractFiles(response: string): FileData[] {
   const files: FileData[] = [];
 
@@ -26,7 +35,8 @@ function extractFiles(response: string): FileData[] {
   let match: RegExpExecArray | null;
 
   while ((match = fileBlockRegex.exec(response)) !== null) {
-    const filePath = match[1].trim();
+      const rawPath = match[1].trim();
+    const filePath = rawPath.replace(/^\d+\)?\s*/, ''); // ✅ sanitize path
     const content = match[2].replace(/\r\n/g, "\n"); // normalize line endings
     files.push({ filePath, content });
   }
@@ -34,17 +44,10 @@ function extractFiles(response: string): FileData[] {
   return files;
 }
 
-
-function extractProjectRoot(response: string): string {
-  const structureRegex = /```\n(.+)\/\n/;
-  const match = structureRegex.exec(response);
-  return match ? match[1].trim() : 'project';
-}
-
 async function createProject(response: string) {
   // const projectRoot = extractProjectRoot(response);
 
-  const projectRoot = 'react-app';
+  const projectRoot = 'laravel-app';
 
   const files = extractFiles(response);
 
@@ -77,7 +80,9 @@ router.post('/save-files', async (req: any, res: any) => {
 
     await createProject(openrouterResponse);
 
-    const projectDir = path.join(process.cwd(), 'react-app');
+    const projectDir = path.join(process.cwd(), 'laravel-app');
+    res.status(200).json({ message: 'Files saved successfully' });
+
     // 0) Move public/index.html to project root (react-app/index.html)
     try {
       const publicIndex = path.join(projectDir, 'public', 'index.html');
